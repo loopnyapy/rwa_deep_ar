@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 typedef void CameraDeepArCallback(CameraDeepArController controller);
-typedef void OnImageCaptured(String path);
-typedef void OnVideoRecorded(String path);
-typedef void OnCameraReady(bool isCameraReady);
+typedef void OnImageCaptured(String? path);
+typedef void OnVideoRecorded(String? path);
+typedef void OnCameraReady(bool? isCameraReady);
 
 enum RecordingMode { photo, video, lowQVideo }
 
@@ -61,7 +61,7 @@ class CameraDeepAr extends StatefulWidget {
   final OnImageCaptured onImageCaptured;
   final OnVideoRecorded onVideoRecorded;
   final OnCameraReady onCameraReady;
-  final String androidLicenceKey, iosLicenceKey;
+  final String? androidLicenceKey, iosLicenceKey;
   final RecordingMode recordingMode;
   final CameraDirection cameraDirection;
   final CameraMode cameraMode;
@@ -70,13 +70,13 @@ class CameraDeepAr extends StatefulWidget {
   final List<Effects> supportedEffects;
 
   const CameraDeepAr(
-      {Key key,
-      @required this.cameraDeepArCallback,
-      @required this.androidLicenceKey,
-      @required this.iosLicenceKey,
-      @required this.onImageCaptured,
-      @required this.onVideoRecorded,
-      @required this.onCameraReady,
+      {Key? key,
+      required this.cameraDeepArCallback,
+      required this.androidLicenceKey,
+      required this.iosLicenceKey,
+      required this.onImageCaptured,
+      required this.onVideoRecorded,
+      required this.onCameraReady,
       this.cameraMode = CameraMode.masks,
       this.cameraDirection = CameraDirection.front,
       this.recordingMode = RecordingMode.video,
@@ -105,7 +105,7 @@ class CameraDeepAr extends StatefulWidget {
 }
 
 class _CameraDeepArState extends State<CameraDeepAr> {
-  CameraDeepArController _controller;
+  CameraDeepArController? _controller;
   bool hasPermission = false;
   List<Effects> get supportedEffects => widget.supportedEffects;
   List<Filters> get supportedFilters => widget.supportedFilters;
@@ -125,7 +125,6 @@ class _CameraDeepArState extends State<CameraDeepAr> {
 
   @override
   Widget build(BuildContext context) {
-
     final Map<String, Object> args = {
       "androidLicenceKey": widget.androidLicenceKey ?? "",
       "iosLicenceKey": widget.iosLicenceKey ?? "",
@@ -160,15 +159,15 @@ class _CameraDeepArState extends State<CameraDeepAr> {
     _controller = controller;
   }
 
-  void onImageCaptured(String path) {
+  void onImageCaptured(String? path) {
     widget.onImageCaptured(path);
   }
 
-  void onVideoRecorded(String path) {
+  void onVideoRecorded(String? path) {
     widget.onVideoRecorded(path);
   }
 
-  void onCameraReady(bool ready) {
+  void onCameraReady(bool? ready) {
     widget.onCameraReady(ready);
   }
 }
@@ -176,7 +175,7 @@ class _CameraDeepArState extends State<CameraDeepAr> {
 class DeepCameraArPermissions {
   static const MethodChannel _channel = const MethodChannel('camera_deep_ar');
 
-  static Future<bool> checkForPermission() async {
+  static Future<bool?> checkForPermission() async {
     return await _channel.invokeMethod('checkForPermission');
   }
 }
@@ -185,7 +184,7 @@ class CameraDeepArController {
   CameraDeepArController._(
     this.channel,
     this._cameraDeepArState,
-  ) : assert(channel != null) {
+  ) {
     channel.setMethodCallHandler(_handleMethodCall);
   }
 
@@ -193,10 +192,8 @@ class CameraDeepArController {
     int id,
     _CameraDeepArState _cameraDeepArState,
   ) async {
-    assert(id != null);
-    final MethodChannel channel =
-        MethodChannel('plugins.flutter.io/deep_ar_camera/$id');
-    String resp = await channel.invokeMethod('isCameraReady');
+    final MethodChannel channel = MethodChannel('plugins.flutter.io/deep_ar_camera/$id');
+    String? resp = await channel.invokeMethod('isCameraReady');
     print("Camera Status $resp");
     return CameraDeepArController._(
       channel,
@@ -212,15 +209,15 @@ class CameraDeepArController {
   Future<dynamic> _handleMethodCall(MethodCall call) async {
     switch (call.method) {
       case "onCameraReady":
-        bool isReady = call.arguments['isReady'] as bool;
+        bool? isReady = call.arguments['isReady'] as bool?;
         _cameraDeepArState.onCameraReady(isReady);
         break;
       case "onVideoRecordingComplete":
-        String path = call.arguments['path'] as String;
+        String? path = call.arguments['path'] as String?;
         _cameraDeepArState.onVideoRecorded(path);
         break;
       case "onSnapPhotoCompleted":
-        String path = call.arguments['path'] as String;
+        String? path = call.arguments['path'] as String?;
         _cameraDeepArState.onImageCaptured(path);
         break;
       default:
@@ -260,19 +257,19 @@ class CameraDeepArController {
   //   return channel.invokeMethod('previous');
   // }
 
-  Future setCameraMode({@required CameraMode camMode}) async {
+  Future setCameraMode({required CameraMode camMode}) async {
     return channel.invokeMethod('setCameraMode', <String, dynamic>{
       'cameraMode': CameraMode.values.indexOf(camMode),
     });
   }
 
-  Future setRecordingMode({@required RecordingMode recordingMode}) async {
+  Future setRecordingMode({required RecordingMode recordingMode}) async {
     return channel.invokeMethod('setRecordingMode', <String, dynamic>{
       'recordingMode': RecordingMode.values.indexOf(recordingMode),
     });
   }
 
-  Future switchCameraDirection({@required CameraDirection direction}) async {
+  Future switchCameraDirection({required CameraDirection direction}) async {
     return channel.invokeMethod('switchCameraDirection', <String, dynamic>{
       'direction': CameraDirection.values.indexOf(direction),
     });
